@@ -8,8 +8,10 @@ environment:
   flutter: ">=2.5.0"
 
 dependencies:
+  dart_jsonwebtoken: ^2.5.1
   flutter:
     sdk: flutter
+  http: ^0.13.5
   plugin_platform_interface: ^2.0.2
 
 dev_dependencies:

@@ -1,6 +1,11 @@
+import 'dart:developer';
+import 'package:docusign_flutter/model/access_token_model.dart';
+import 'package:docusign_flutter/model/account_info.dart';
+import 'package:docusign_flutter/model/auth_model.dart';
+import 'package:docusign_flutter/model/envelope_model.dart';
+import 'package:docusign_flutter/model/input_token_model.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:docusign_flutter/docusign_flutter.dart';
 
 String accessToken = r'<<NEED_CHANGE>>';
@@ -31,35 +36,17 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  final _docusignFlutterPlugin = DocusignFlutter();
+  AccountInfoModel? _accountInfoModel;
+  String? _docusignObserver;
+  String? _offlineEnvelopeId;
+  bool? _syncingStatus;
+  bool? _offlineSigningStatus;
+  AccessTokenModel? _accessTokenModel;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion = await _docusignFlutterPlugin.getPlatformVersion() ??
-          'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
+    DocusignFlutter.listenObserver(_onEvent, _onError);
   }
 
   @override
@@ -75,7 +62,7 @@ class _MyAppState extends State<MyApp> {
             return SingleChildScrollView(
               child: Center(
                 child: Column(children: [
-                  Text('Token status: ${_accessTokenModel?.access_token}\n'),
+                  Text('Token status: ${_accessTokenModel?.accessToken}\n'),
                   ElevatedButton(
                     onPressed: () => _getAccessToken(),
                     child: const Text('AccessToken'),
@@ -121,5 +108,116 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+
+  Future<void> _getAccessToken() async {
+    var inputToken = InputTokenModel(
+        url: 'account-d.docusign.com',
+        urlPath: '/oauth/token',
+        integratorKey: integratorKey,
+        userId: userId,
+        publicRSAKey: publicRSAKey,
+        privateRSAKey: privateRSAKey);
+    var result = await DocusignFlutter.getAccessToken(inputToken);
+    setState(() {
+      _accessTokenModel = result;
+      if (result?.accessToken != null) {
+        accessToken = result!.accessToken;
+      }
+    });
+  }
+
+  Future<void> _auth() async {
+    var authModel = AuthModel(
+      accessToken: accessToken,
+      expiresIn: expiresIn,
+      accountId: accountId,
+      email: email,
+      host: host,
+      integratorKey: integratorKey,
+      userId: userId,
+      userName: userName,
+    );
+    var result = await DocusignFlutter.auth(authModel);
+    setState(() {
+      _accountInfoModel = result;
+    });
+  }
+
+  Future<void> _createOfflineEnvelope() async {
+    FilePickerResult? filePickerResult = await FilePicker.platform
+        .pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
+
+    if (filePickerResult != null &&
+        filePickerResult.files.single.path != null) {
+      // File file = File(filePickerResult.files.single.path!);
+      var envelopeModel = EnvelopeModel(
+        filePath: filePickerResult.files.single.path!,
+        envelopeName: 'test',
+        envelopeSubject: 'test',
+        envelopeMessage: 'message',
+        hostName: 'Mbola Raharison',
+        hostEmail: 'raharison.m@bentouch-digital.com',
+        inPersonSignerName: 'Mbolatina Arimanana Raharison',
+        inPersonSignerEmail: 'mb.raharison@gmail.com',
+        signerName: 'Mbolatina Arimanana Raharison',
+        signerEmail: 'mb.raharison@gmail.com',
+        signers: ['Mbola', 'Aina'],
+      );
+      var result = await DocusignFlutter.createEnvelope(envelopeModel);
+      setState(() {
+        _offlineEnvelopeId = result;
+      });
+    } else {
+      // User canceled the picker
+    }
+  }
+
+  void _onEvent(Object? event) {
+    setState(() {
+      _docusignObserver = event.toString();
+    });
+  }
+
+  void _onError(Object error) {
+    setState(() {
+      _docusignObserver = error.toString();
+    });
+  }
+
+  Future<void> _offlineSigning() async {
+    var result = false;
+    try {
+      await DocusignFlutter.offlineSigning(_offlineEnvelopeId ?? '');
+      result = true;
+    } on Exception {
+      result = false;
+    }
+
+    setState(() {
+      _offlineSigningStatus = result;
+    });
+  }
+
+  Future<void> _syncingEnvelopes() async {
+    var result = false;
+    try {
+      await DocusignFlutter.syncEnvelopes();
+      log('sync true ');
+      result = true;
+    } on Exception {
+      log('sync false ');
+      result = false;
+    }
+    setState(() {
+      _syncingStatus = result;
+    });
+  }
+
+  String _convertStatus(bool? status) {
+    if (status != null) {
+      return status ? 'success' : 'failed';
+    }
+    return 'none';
   }
 }

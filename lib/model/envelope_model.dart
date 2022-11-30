@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class EnvelopeModel {
   late final String filePath;
   late final String envelopeName;
@@ -37,7 +35,7 @@ class EnvelopeModel {
         inPersonSignerName = json['inPersonSignerName'],
         inPersonSignerEmail = json['inPersonSignerEmail'],
         signerName = json['signerName'],
-        signerEmail = json['signerEmail'];
+        signerEmail = json['signerEmail'],
         signers = json['signers'];
 
   Map<String, dynamic> toJson() => {

@@ -1,22 +1,22 @@
 class AccessTokenModel {
-  late final String access_token;
-  late final String token_type;
-  late final int expires_in;
+  late final String accessToken;
+  late final String tokenType;
+  late final int expiresIn;
 
   AccessTokenModel({
-    required this.access_token,
-    required this.token_type,
-    required this.expires_in,
+    required this.accessToken,
+    required this.tokenType,
+    required this.expiresIn,
   });
 
   AccessTokenModel.fromJson(Map<String, dynamic> json)
-      : access_token = json['access_token'],
-        token_type = json['token_type'],
-        expires_in = json['expires_in'];
+      : accessToken = json['access_token'],
+        tokenType = json['token_type'],
+        expiresIn = json['expires_in'];
 
   Map<String, dynamic> toJson() => {
-        'alg': access_token,
-        'token_type': token_type,
-        'expires_in': expires_in,
+        'alg': accessToken,
+        'token_type': tokenType,
+        'expires_in': expiresIn,
       };
 }
