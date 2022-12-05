@@ -1,9 +1,18 @@
-import 'dart:developer';
+import 'dart:convert';
+import 'dart:io';
 import 'package:docusign_flutter/model/access_token_model.dart';
 import 'package:docusign_flutter/model/account_info.dart';
 import 'package:docusign_flutter/model/auth_model.dart';
-import 'package:docusign_flutter/model/envelope_model.dart';
+import 'package:docusign_flutter/model/carbon_copy_model.dart';
+import 'package:docusign_flutter/model/document_model.dart';
+import 'package:docusign_flutter/model/envelope_definition_model.dart';
 import 'package:docusign_flutter/model/input_token_model.dart';
+import 'package:docusign_flutter/model/recipient_sms_authentication_model.dart';
+import 'package:docusign_flutter/model/recipient_view_request_model.dart';
+import 'package:docusign_flutter/model/recipients_model.dart';
+import 'package:docusign_flutter/model/sign_here_tab_model.dart';
+import 'package:docusign_flutter/model/signer_model.dart';
+import 'package:docusign_flutter/model/tabs_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:docusign_flutter/docusign_flutter.dart';
@@ -16,8 +25,8 @@ const String host = r'https://demo.docusign.net/restapi';
 const String integratorKey = r'<<NEED_CHANGE>>';
 const String userId = r'<<NEED_CHANGE>>';
 const String userName = r'<<NEED_CHANGE>>';
+const String privateRSAKey = r'''<<NEED_CHANGE>>''';
 const String publicRSAKey = r'''<<NEED_CHANGE>>''';
-const privateRSAKey = r'''<<NEED_CHANGE>>''';
 
 const String envelopeId = r'<<NEED_CHANGE>>';
 const String recipientClientUserId = r'<<NEED_CHANGE>>';
@@ -38,7 +47,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   AccountInfoModel? _accountInfoModel;
   String? _docusignObserver;
-  String? _offlineEnvelopeId;
+  String? _envelopeId;
+  String? _signingUrl;
   bool? _syncingStatus;
   bool? _offlineSigningStatus;
   AccessTokenModel? _accessTokenModel;
@@ -77,10 +87,22 @@ class _MyAppState extends State<MyApp> {
                   Padding(
                       padding: const EdgeInsets.only(top: 20),
                       child:
-                          Text('Envelope Id (OFFLINE):$_offlineEnvelopeId\n')),
+                          Text('Envelope Id (OFFLINE):$_envelopeId\n')),
                   ElevatedButton(
-                    onPressed: () => _createOfflineEnvelope(),
+                    onPressed: () => _createEnvelope(),
                     child: const Text('Create offline enveloppe'),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child:
+                          Text('Signing url :$_signingUrl\n')),
+                  ElevatedButton(
+                    onPressed: () => _captiveSigning(),
+                    child: const Text('Captive signing'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: const Text('Sign here'),
                   ),
                   Padding(
                       padding: const EdgeInsets.only(top: 20),
@@ -144,33 +166,121 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  Future<void> _createOfflineEnvelope() async {
+  Future<void> _createEnvelope() async {
     FilePickerResult? filePickerResult = await FilePicker.platform
         .pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
 
     if (filePickerResult != null &&
         filePickerResult.files.single.path != null) {
-      // File file = File(filePickerResult.files.single.path!);
-      var envelopeModel = EnvelopeModel(
-        filePath: filePickerResult.files.single.path!,
-        envelopeName: 'test',
-        envelopeSubject: 'test',
-        envelopeMessage: 'message',
-        hostName: 'Mbola Raharison',
-        hostEmail: 'raharison.m@bentouch-digital.com',
-        inPersonSignerName: 'Mbolatina Arimanana Raharison',
-        inPersonSignerEmail: 'mb.raharison@gmail.com',
-        signerName: 'Mbolatina Arimanana Raharison',
-        signerEmail: 'mb.raharison@gmail.com',
-        signers: ['Mbola', 'Aina'],
+      File file = File(filePickerResult.files.single.path!);
+      List<int> bytes = await file.readAsBytes();
+
+      // documents
+      DocumentModel document = DocumentModel(
+        documentBase64: base64Encode(bytes),
+        documentId: '1', 
+        fileExtension: 'pdf', 
+        includeInDownload: false, 
+        name: 'test.pdf');
+      List<DocumentModel> documents = [document];
+
+      // carbon copies
+      CarbonCopyModel carbonCopy = CarbonCopyModel(
+        email: '<<NEED_CHANGE>>', 
+        firstName: '<<NEED_CHANGE>>', 
+        lastName: '<<NEED_CHANGE>>', 
+        name: '<<NEED_CHANGE>>', 
+        recipientId: '<<NEED_CHANGE>>', 
+        routingOrder: '2', 
+        status: 'created'
       );
-      var result = await DocusignFlutter.createEnvelope(envelopeModel);
+      // sms authentication
+      RecipientSmsAuthenticationModel smsAuthentication1 = RecipientSmsAuthenticationModel(senderProvidedNumbers: ['<<NEED_CHANGE>>']);
+      RecipientSmsAuthenticationModel smsAuthentication2 = RecipientSmsAuthenticationModel(senderProvidedNumbers: ['<<NEED_CHANGE>>']);
+      SignHereTabModel signHereTabModel1 = SignHereTabModel(
+        anchorString: '<<NEED_CHANGE>>', 
+        anchorUnits: '<<NEED_CHANGE>>', 
+        anchorXOffset: '0', 
+        anchorYOffset: '50', 
+        status: 'active');
+      SignHereTabModel signHereTabModel2 = SignHereTabModel(
+        anchorString: '<<NEED_CHANGE>>', 
+        anchorUnits: '<<NEED_CHANGE>>', 
+        anchorXOffset: '50', 
+        anchorYOffset: '50', 
+        status: 'active');
+      // tabs
+      TabsModel tabs1 = TabsModel(
+        signHereTabs: [signHereTabModel1]
+      );
+      TabsModel tabs2 = TabsModel(
+        signHereTabs: [signHereTabModel2]
+      );
+      // signers
+      SignerModel signer1 = SignerModel(
+        clientUserId: '1', 
+        email: '<<NEED_CHANGE>>', 
+        firstName: '<<NEED_CHANGE>>', 
+        lastName: '<<NEED_CHANGE>>', 
+        name: '<<NEED_CHANGE>>', 
+        recipientId: '1', 
+        routingOrder: '1', 
+        smsAuthentication: smsAuthentication1, 
+        status: 'created', 
+        tabs: tabs1,
+        idCheckConfigurationName: 'SMS Auth \$',
+        requireIdLookup: true,
+        );
+      SignerModel signer2 = SignerModel(
+        clientUserId: '2', 
+        email: '<<NEED_CHANGE>>', 
+        firstName: '<<NEED_CHANGE>>', 
+        lastName: '<<NEED_CHANGE>>', 
+        name: '<<NEED_CHANGE>>', 
+        recipientId: '2', 
+        routingOrder: '1', 
+        smsAuthentication: smsAuthentication2, 
+        status: 'created', 
+        tabs: tabs2,
+        idCheckConfigurationName: 'SMS Auth \$',
+        requireIdLookup: true,
+        );
+
+      // recipients
+      RecipientsModel recipients = RecipientsModel(
+        carbonCopies: [carbonCopy], 
+        signers: [signer1, signer2]
+      );
+
+      EnvelopeDefinitionModel body = EnvelopeDefinitionModel(
+        documents: documents, 
+        emailSubject: 'Test', 
+        recipients: recipients, 
+        status: 'sent'
+        );
+
+      var result = await DocusignFlutter.createEnvelope(accountId, body);
       setState(() {
-        _offlineEnvelopeId = result;
+        _envelopeId = result;
       });
     } else {
       // User canceled the picker
     }
+  }
+
+  Future<void> _captiveSigning() async {
+    RecipientViewRequestModel requestViewRequestModel = RecipientViewRequestModel(
+      authenticationMethod: "None", 
+      clientUserId: "1", 
+      email: "<<NEED_CHANGE>>", 
+      recipientId: "1", 
+      returnUrl: "http://www.google.com", 
+      userName: "<<NEED_CHANGE>>");
+
+    var result = await DocusignFlutter.captiveSigning(accountId, _envelopeId ?? '', requestViewRequestModel);
+      setState(() {
+        _signingUrl = result;
+      });
   }
 
   void _onEvent(Object? event) {
@@ -188,7 +298,7 @@ class _MyAppState extends State<MyApp> {
   Future<void> _offlineSigning() async {
     var result = false;
     try {
-      await DocusignFlutter.offlineSigning(_offlineEnvelopeId ?? '');
+      await DocusignFlutter.offlineSigning(_envelopeId ?? '');
       result = true;
     } on Exception {
       result = false;
@@ -203,10 +313,8 @@ class _MyAppState extends State<MyApp> {
     var result = false;
     try {
       await DocusignFlutter.syncEnvelopes();
-      log('sync true ');
       result = true;
     } on Exception {
-      log('sync false ');
       result = false;
     }
     setState(() {

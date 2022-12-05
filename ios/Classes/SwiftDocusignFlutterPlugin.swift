@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import DocuSignSDK
+import DocuSignAPI
 
 enum ChannelName {
   static let methods = "docusign_flutter/methods"
@@ -99,59 +100,54 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
             return
         }
         
-        guard let jsonData = params[0].data(using: .utf8),
-              let createEnvelope: CreateEnvelopeModel = try? JSONDecoder().decode(CreateEnvelopeModel.self, from: jsonData) else {
+        let accountId = params[0];
+
+        guard let jsonData = params[1].data(using: .utf8),
+              let envelopeDefinitionModel: EnvelopeDefinitionModel = try? JSONDecoder().decode(EnvelopeDefinitionModel.self, from: jsonData) else {
             loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
             return
         }
         
-        print("hello from Mbola : ")
+        // documents
+        var documents = [DSAPIDocument]()
+        for document in envelopeDefinitionModel.documents {
+            documents.append(DSAPIDocument.init(documentBase64: document.documentBase64, documentId: document.documentId, fileExtension: document.fileExtension, includeInDownload: document.includeInDownload, name: document.name));
+        }
         
-        let tabA = DSMTabBuilder.init(for: .signHere)
-            .addName("signTab1")
-            .addRecipientId("1")
-            .addDocumentId("1")
-            .addPageNumber(1)
-            .addFrame(CGRect(x: 150, y: 600, width: 50, height: 40))
-            .build()
+        // carbon copies
+        var carbonCopies = [DSAPICarbonCopy]()
+        for carbonCopy in envelopeDefinitionModel.recipients.carbonCopies {
+            carbonCopies.append(DSAPICarbonCopy.init(email: carbonCopy.email, firstName: carbonCopy.firstName, lastName: carbonCopy.lastName, name: carbonCopy.name, recipientId: carbonCopy.recipientId, routingOrder: carbonCopy.routingOrder, status: carbonCopy.status))
+        }
         
-        let recipientA = DSMRecipientBuilder.init(for: .inPersonSigner)
-            .addRecipientId("1")
-            .addHostName(createEnvelope.hostName)
-            .addHostEmail(createEnvelope.hostEmail)
-            .addSignerName(createEnvelope.inPersonSignerName)
-            .addSignerEmail(createEnvelope.inPersonSignerEmail)
-            .addRoutingOrder(1)
-            .add([tabA])
-            .build()
+        // signers
+        var signers = [DSAPISigner]()
+        for signer in envelopeDefinitionModel.recipients.signers {
+            // sms authentication
+            let smsAuthentication = DSAPIRecipientSMSAuthentication.init(senderProvidedNumbers: signer.smsAuthentication.senderProvidedNumbers)
+            
+            // sign here tabs
+            var signHereTabs = [DSAPISignHere]()
+            for signHereTab in signer.tabs.signHereTabs {
+                signHereTabs.append(DSAPISignHere.init(anchorString: signHereTab.anchorString, anchorUnits: signHereTab.anchorUnits, anchorXOffset: signHereTab.anchorXOffset, anchorYOffset: signHereTab.anchorYOffset, status: signHereTab.status))
+            }
+            // tabs
+            let tabs = DSAPITabs.init(signHereTabs: signHereTabs)
+            
+            signers.append(DSAPISigner.init(clientUserId: signer.clientUserId, email: signer.email, firstName: signer.firstName, idCheckConfigurationName: signer.idCheckConfigurationName, lastName: signer.lastName, name: signer.name, recipientId: signer.recipientId, requireIdLookup: signer.requireIdLookup, routingOrder: signer.routingOrder, smsAuthentication: smsAuthentication, status: signer.status, tabs: tabs))
+        }
         
-        let recipientB = DSMRecipientBuilder.init(for: .CC)
-            .addRecipientId("2")
-            .addSignerName(createEnvelope.inPersonSignerName)
-            .addSignerEmail(createEnvelope.inPersonSignerEmail)
-            .build()
+        let recipients = DSAPIRecipients.init(carbonCopies: carbonCopies, signers: signers)
         
-        let filename = createEnvelope.envelopeName
+        let envelopeDefinition = DSAPIEnvelopeDefinition.init(documents: documents, emailSubject: envelopeDefinitionModel.emailSubject, recipients: recipients, status: envelopeDefinitionModel.status)
         
-        let document = DSMDocumentBuilder.init()
-            .addName("doc1")
-            .addDocumentId("1")
-            .addFilePath(createEnvelope.filePath)
-            .build()
-        
-        let envelopeDefinition = DSMEnvelopeBuilder.init()
-            .addEnvelopeName("Test Envelope -- name")
-            .addEmailSubject("Test Envelope -- Subject")
-            .addEmailMessage("Message blurb -- \n -- there goes the docusign email message -- sent via sdk -- ")
-            .add([recipientA, recipientB])
-            .add(document)
-            .build()
-        
-        DSMEnvelopesManager.init().composeEnvelope(with: envelopeDefinition, signingMode: .offline) { (envelopeId, error) in
-            if envelopeId != nil {
-                self.createEnvelopeResult?(envelopeId)
+        EnvelopesAPI.envelopesPostEnvelopes(accountId: accountId, body: envelopeDefinition) { data, error in
+            if error != nil {
+                self.createEnvelopeResult?(self.buildError(title: "Create envelope cancelled", details: error?.localizedDescription))
+                return
             } else {
-                self.createEnvelopeResult?(self.buildError(title: "Create envelope cancelled", details: error.localizedDescription))
+                self.createEnvelopeResult?(data?.envelopeId)
+                return
             }
         }
     }
@@ -187,25 +183,23 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
             return
         }
         
-        guard let jsonData = params[0].data(using: .utf8),
-              let captiveSignModel: CaptiveSignModel = try? JSONDecoder().decode(CaptiveSignModel.self, from: jsonData) else {
+        let accountId = params[0]
+        let envelopeId = params[1]
+        
+        guard let jsonData = params[2].data(using: .utf8),
+              let recipientViewRequestModel: RecipientViewRequestModel = try? JSONDecoder().decode(RecipientViewRequestModel.self, from: jsonData) else {
             captiveSignResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
             return
         }
         
-        guard let viewController: UIViewController = getPresentingViewController() else {
-            captiveSignResult?(buildError(title: "Singing cancelled"))
-            return
-        }
+        let recipientViewRequest = DSAPIRecipientViewRequest.init(authenticationMethod: recipientViewRequestModel.authenticationMethod, clientUserId: recipientViewRequestModel.clientUserId, email: recipientViewRequestModel.email, recipientId: recipientViewRequestModel.recipientId, returnUrl: URL.init(string: recipientViewRequestModel.returnUrl), userName: recipientViewRequestModel.userName)
         
-        DSMEnvelopesManager().presentCaptiveSigning(withPresenting: viewController,
-                                               envelopeId: captiveSignModel.envelopeId,
-                                               recipientUserName: captiveSignModel.recipientUserName,
-                                               recipientEmail: captiveSignModel.recipientEmail,
-                                               recipientClientUserId: captiveSignModel.recipientClientUserId,
-                                               animated: true) { vc, error in
+        EnvelopesAPI.viewsPostEnvelopeRecipientView(accountId: accountId, envelopeId: envelopeId, body: recipientViewRequest) { data, error in
             if error != nil {
-                self.captiveSignResult?(self.buildError(title: "Singing cancelled"))
+                self.captiveSignResult?(self.buildError(title: "Signing cancelled"))
+                return
+            } else {
+                self.captiveSignResult?(data?.url?.absoluteString)
                 return
             }
         }

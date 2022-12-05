@@ -1,5 +1,5 @@
 class EnvelopeModel {
-  late final String filePath;
+  late final String documentBase64;
   late final String envelopeName;
   late final String envelopeSubject;
   late final String envelopeMessage;
@@ -12,21 +12,19 @@ class EnvelopeModel {
   late final List<String> signers;
 
   EnvelopeModel({
-    required this.filePath,
+    required this.documentBase64,
     required this.envelopeName,
     required this.envelopeSubject,
     required this.envelopeMessage,
     required this.hostName,
     required this.hostEmail,
-    required this.inPersonSignerName,
-    required this.inPersonSignerEmail,
     required this.signerName,
     required this.signerEmail,
     required this.signers,
   });
 
   EnvelopeModel.fromJson(Map<String, dynamic> json)
-      : filePath = json['filePath'],
+      : documentBase64 = json['documentBase64'],
         envelopeName = json['envelopeName'],
         envelopeSubject = json['envelopeSubject'],
         envelopeMessage = json['envelopeMessage'],
@@ -39,7 +37,7 @@ class EnvelopeModel {
         signers = json['signers'];
 
   Map<String, dynamic> toJson() => {
-        'filePath': filePath,
+        'documentBase64': documentBase64,
         'envelopeName': envelopeName,
         'envelopeSubject': envelopeSubject,
         'envelopeMessage': envelopeMessage,

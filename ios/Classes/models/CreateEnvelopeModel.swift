@@ -1,12 +1,5 @@
-//
-//  CreateEnvelopeModel.swift
-//  docusign_flutter
-//
-//  Created by Scot SCRIVEN on 22/06/2022.
-//
-
 struct CreateEnvelopeModel: Decodable {
-    let filePath: String;
+    let documentBase64: String;
     let envelopeName: String;
     let envelopeSubject: String;
     let envelopeMessage: String;

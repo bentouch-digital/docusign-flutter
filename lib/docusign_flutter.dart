@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:docusign_flutter/model/access_token_model.dart';
-import 'package:docusign_flutter/model/captive_signing_model.dart';
-import 'package:docusign_flutter/model/envelope_model.dart';
+import 'package:docusign_flutter/model/envelope_definition_model.dart';
 import 'package:docusign_flutter/model/input_token_model.dart';
+import 'package:docusign_flutter/model/recipient_view_request_model.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'model/account_info.dart';
@@ -44,11 +44,17 @@ class DocusignFlutter {
     return null;
   }
 
-  static Future<String?> createEnvelope(EnvelopeModel envelopeModel) async {
-    String json = jsonEncode(envelopeModel);
+  static Future<String?> createEnvelope(String accountId, EnvelopeDefinitionModel body) async {
+    String jsonBody = jsonEncode(body);
     return await _methodsChannel
-        .invokeMethod<dynamic>('createEnvelope', [json]);
+        .invokeMethod<dynamic>('createEnvelope', [accountId, jsonBody]);
   }
+
+  // static Future<String?> createEnvelope(EnvelopeModel envelopeModel) async {
+  //   String json = jsonEncode(envelopeModel);
+  //   return await _methodsChannel
+  //       .invokeMethod<dynamic>('createEnvelope', [json]);
+  // }
 
   static Future<void> offlineSigning(String envelopeId) async {
     await _methodsChannel.invokeMethod('offlineSigning', [envelopeId]);
@@ -58,10 +64,12 @@ class DocusignFlutter {
     await _methodsChannel.invokeMethod('syncEnvelopes');
   }
 
-  static Future<void> captiveSigning(
-      CaptiveSigningModel captiveSigningModel) async {
-    String json = jsonEncode(captiveSigningModel);
-    await _methodsChannel.invokeMethod('captiveSinging', [json]);
+  static Future<String?> captiveSigning(
+      String accountId,
+      String envelopeId,
+      RecipientViewRequestModel recipientViewRequest) async {
+    String jsonRecipientViewRequest = jsonEncode(recipientViewRequest);
+    return await _methodsChannel.invokeMethod('captiveSinging', [accountId, envelopeId, jsonRecipientViewRequest]);
   }
 
   static String _generateJWT(InputTokenModel inputTokenModel) {
