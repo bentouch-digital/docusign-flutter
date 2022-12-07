@@ -13,6 +13,10 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
     
     private var loginResult: FlutterResult?
     private var captiveSignResult: FlutterResult?
+    private var deleteDocumentsResult: FlutterResult?
+    private var addDocumentsResult: FlutterResult?
+    private var createRecipientTabsResult: FlutterResult?
+    private var updateRecipientsResult: FlutterResult?
     private var createEnvelopeResult: FlutterResult?
     private var offlineSigningResult: FlutterResult?
     private var syncEnvelopesResult: FlutterResult?
@@ -38,12 +42,24 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
         case "createEnvelope":
             createEnvelopeResult = result
             createEnvelope(call: call)
-        case "offlineSigning":
-            offlineSigningResult = result
-            offlineSigning(call: call)
         case "captiveSinging":
             captiveSignResult = result
             captiveSigning(call: call)
+        case "deleteDocuments":
+            deleteDocumentsResult = result
+            deleteDocuments(call: call)
+        case "addDocuments":
+            addDocumentsResult = result
+            addDocuments(call: call)
+        case "createRecipientTabs":
+            createRecipientTabsResult = result
+            createRecipientTabs(call: call)
+        case "updateRecipients":
+            updateRecipientsResult = result
+            updateRecipients(call: call)
+        case "offlineSigning":
+            offlineSigningResult = result
+            offlineSigning(call: call)
         case "syncEnvelopes":
             syncEnvelopesResult = result
             syncEnvelopes(call: call)
@@ -147,6 +163,158 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
                 return
             } else {
                 self.createEnvelopeResult?(data?.envelopeId)
+                return
+            }
+        }
+    }
+    
+    func deleteDocuments(call: FlutterMethodCall) {
+        guard let params = call.arguments as? Array<String> else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect params string"))
+            return
+        }
+        
+        let accountId = params[0];
+        let envelopeId = params[1];
+        guard let jsonData = params[2].data(using: .utf8),
+              let deleteDocumentsModel: DeleteDocumentsModel = try? JSONDecoder().decode(DeleteDocumentsModel.self, from: jsonData) else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
+            return
+        }
+        
+        // documents
+        var documents = [DSAPIDocument]()
+        for documentId in deleteDocumentsModel.documentIds {
+            documents.append(DSAPIDocument.init(documentId: documentId));
+        }
+        
+        // envelope definition
+        let envelopeDefinition = DSAPIEnvelopeDefinition.init(documents: documents)
+        
+        EnvelopesAPI.documentsDeleteDocuments(accountId: accountId, envelopeId: envelopeId, body: envelopeDefinition) { data, error in
+            if error != nil {
+                self.deleteDocumentsResult?(self.buildError(title: "Delete envelope documents cancelled", details: error?.localizedDescription))
+                return
+            } else {
+                self.deleteDocumentsResult?(data?.envelopeId)
+                return
+            }
+        }
+    }
+    
+    func addDocuments(call: FlutterMethodCall) {
+        guard let params = call.arguments as? Array<String> else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect params string"))
+            return
+        }
+        
+        let accountId = params[0];
+        let envelopeId = params[1];
+        guard let jsonData = params[2].data(using: .utf8),
+              let addDocumentsModel: AddDocumentsModel = try? JSONDecoder().decode(AddDocumentsModel.self, from: jsonData) else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
+            return
+        }
+        
+        // documents
+        var documents = [DSAPIDocument]()
+        for document in addDocumentsModel.documents {
+            documents.append(DSAPIDocument.init(documentBase64: document.documentBase64, documentId: document.documentId, fileExtension: document.fileExtension, includeInDownload: document.includeInDownload, name: document.name));
+        }
+        
+        // envelope definition
+        let envelopeDefinition = DSAPIEnvelopeDefinition.init(documents: documents)
+        
+        EnvelopesAPI.documentsPutDocuments(accountId: accountId, envelopeId: envelopeId, body: envelopeDefinition) { data, error in
+            if error != nil {
+                self.addDocumentsResult?(self.buildError(title: "add documents cancelled", details: error?.localizedDescription))
+                return
+            } else {
+                self.addDocumentsResult?(data?.envelopeId)
+                return
+            }
+        }
+    }
+    
+    func createRecipientTabs(call: FlutterMethodCall) {
+        guard let params = call.arguments as? Array<String> else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect params string"))
+            return
+        }
+        
+        let accountId = params[0];
+        let envelopeId = params[1];
+        let recipientId = params[2];
+        guard let jsonData = params[3].data(using: .utf8),
+              let tabsModel: TabsModel = try? JSONDecoder().decode(TabsModel.self, from: jsonData) else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
+            return
+        }
+        
+        // sign here tabs
+        var signHereTabs = [DSAPISignHere]()
+        for signHereTab in tabsModel.signHereTabs {
+            signHereTabs.append(DSAPISignHere.init(anchorString: signHereTab.anchorString, anchorUnits: signHereTab.anchorUnits, anchorXOffset: signHereTab.anchorXOffset, anchorYOffset: signHereTab.anchorYOffset, status: signHereTab.status))
+        }
+        // tabs
+        let tabs = DSAPITabs.init(signHereTabs: signHereTabs)
+        
+        EnvelopesAPI.recipientsPostRecipientTabs(accountId: accountId, envelopeId: envelopeId, recipientId: recipientId, body: tabs) { data, error in
+            if error != nil {
+                self.createRecipientTabsResult?(self.buildError(title: "Create recipient tabs cancelled", details: error?.localizedDescription))
+                return
+            } else {
+                self.createRecipientTabsResult?(envelopeId)
+                return
+            }
+        }
+    }
+    
+    func updateRecipients(call: FlutterMethodCall) {
+        guard let params = call.arguments as? Array<String> else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect params string"))
+            return
+        }
+        
+        let accountId = params[0];
+        let envelopeId = params[1];
+        guard let jsonData = params[2].data(using: .utf8),
+              let recipientsModel: RecipientsModel = try? JSONDecoder().decode(RecipientsModel.self, from: jsonData) else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
+            return
+        }
+        
+        // carbon copies
+        var carbonCopies = [DSAPICarbonCopy]()
+        for carbonCopy in recipientsModel.carbonCopies {
+            carbonCopies.append(DSAPICarbonCopy.init(email: carbonCopy.email, firstName: carbonCopy.firstName, lastName: carbonCopy.lastName, name: carbonCopy.name, recipientId: carbonCopy.recipientId, routingOrder: carbonCopy.routingOrder, status: carbonCopy.status))
+        }
+        
+        // signers
+        var signers = [DSAPISigner]()
+        for signer in recipientsModel.signers {
+            // sms authentication
+            let smsAuthentication = DSAPIRecipientSMSAuthentication.init(senderProvidedNumbers: signer.smsAuthentication.senderProvidedNumbers)
+            
+            // sign here tabs
+            var signHereTabs = [DSAPISignHere]()
+            for signHereTab in signer.tabs.signHereTabs {
+                signHereTabs.append(DSAPISignHere.init(anchorString: signHereTab.anchorString, anchorUnits: signHereTab.anchorUnits, anchorXOffset: signHereTab.anchorXOffset, anchorYOffset: signHereTab.anchorYOffset, status: signHereTab.status))
+            }
+            // tabs
+            let tabs = DSAPITabs.init(signHereTabs: signHereTabs)
+            
+            signers.append(DSAPISigner.init(clientUserId: signer.clientUserId, email: signer.email, firstName: signer.firstName, idCheckConfigurationName: signer.idCheckConfigurationName, lastName: signer.lastName, name: signer.name, recipientId: signer.recipientId, requireIdLookup: signer.requireIdLookup, routingOrder: signer.routingOrder, smsAuthentication: smsAuthentication, status: signer.status, tabs: tabs))
+        }
+        
+        let recipients = DSAPIRecipients.init(carbonCopies: carbonCopies, signers: signers)
+        
+        EnvelopesAPI.recipientsPutRecipients(accountId: accountId, envelopeId: envelopeId, body: recipients) { data, error in
+            if error != nil {
+                self.updateRecipientsResult?(self.buildError(title: "update recipients cancelled", details: error?.localizedDescription))
+                return
+            } else {
+                self.updateRecipientsResult?(envelopeId)
                 return
             }
         }

@@ -4,10 +4,11 @@ class CaptiveSigningModel {
   late final String recipientEmail;
   late final String recipientClientUserId;
 
-  CaptiveSigningModel({required this.envelopeId,
-    required this.recipientUserName,
-    required this.recipientEmail,
-    required this.recipientClientUserId});
+  CaptiveSigningModel(
+      {required this.envelopeId,
+      required this.recipientUserName,
+      required this.recipientEmail,
+      required this.recipientClientUserId});
 
   CaptiveSigningModel.fromJson(Map<String, dynamic> json)
       : envelopeId = json['envelopeId'],
@@ -16,9 +17,9 @@ class CaptiveSigningModel {
         recipientClientUserId = json['recipientClientUserId'];
 
   Map<String, dynamic> toJson() => {
-    'envelopeId': envelopeId,
-    'recipientUserName': recipientUserName,
-    'recipientEmail': recipientEmail,
-    'recipientClientUserId': recipientClientUserId,
-  };
+        'envelopeId': envelopeId,
+        'recipientUserName': recipientUserName,
+        'recipientEmail': recipientEmail,
+        'recipientClientUserId': recipientClientUserId,
+      };
 }

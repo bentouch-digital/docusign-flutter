@@ -2,9 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:docusign_flutter/model/access_token_model.dart';
+import 'package:docusign_flutter/model/add_documents_model.dart';
+import 'package:docusign_flutter/model/delete_documents_model.dart';
 import 'package:docusign_flutter/model/envelope_definition_model.dart';
 import 'package:docusign_flutter/model/input_token_model.dart';
 import 'package:docusign_flutter/model/recipient_view_request_model.dart';
+import 'package:docusign_flutter/model/recipients_model.dart';
+import 'package:docusign_flutter/model/tabs_model.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'model/account_info.dart';
@@ -44,17 +48,12 @@ class DocusignFlutter {
     return null;
   }
 
-  static Future<String?> createEnvelope(String accountId, EnvelopeDefinitionModel body) async {
+  static Future<String?> createEnvelope(
+      String accountId, EnvelopeDefinitionModel body) async {
     String jsonBody = jsonEncode(body);
     return await _methodsChannel
         .invokeMethod<dynamic>('createEnvelope', [accountId, jsonBody]);
   }
-
-  // static Future<String?> createEnvelope(EnvelopeModel envelopeModel) async {
-  //   String json = jsonEncode(envelopeModel);
-  //   return await _methodsChannel
-  //       .invokeMethod<dynamic>('createEnvelope', [json]);
-  // }
 
   static Future<void> offlineSigning(String envelopeId) async {
     await _methodsChannel.invokeMethod('offlineSigning', [envelopeId]);
@@ -64,28 +63,55 @@ class DocusignFlutter {
     await _methodsChannel.invokeMethod('syncEnvelopes');
   }
 
-  static Future<String?> captiveSigning(
-      String accountId,
-      String envelopeId,
+  static Future<String?> captiveSigning(String accountId, String envelopeId,
       RecipientViewRequestModel recipientViewRequest) async {
     String jsonRecipientViewRequest = jsonEncode(recipientViewRequest);
-    return await _methodsChannel.invokeMethod('captiveSinging', [accountId, envelopeId, jsonRecipientViewRequest]);
+    return await _methodsChannel.invokeMethod(
+        'captiveSinging', [accountId, envelopeId, jsonRecipientViewRequest]);
+  }
+
+  static Future<String?> deleteDocuments(String accountId, String envelopeId,
+      DeleteDocumentsModel deleteDocumentsModel) async {
+    String jsonDeleteDocumentsModel = jsonEncode(deleteDocumentsModel);
+    return await _methodsChannel.invokeMethod(
+        'deleteDocuments', [accountId, envelopeId, jsonDeleteDocumentsModel]);
+  }
+
+  static Future<String?> addDocuments(String accountId, String envelopeId,
+      AddDocumentsModel addDocumentsModel) async {
+    String jsonAddDocumentsModel = jsonEncode(addDocumentsModel);
+    return await _methodsChannel.invokeMethod(
+        'addDocuments', [accountId, envelopeId, jsonAddDocumentsModel]);
+  }
+
+  static Future<String?> updateRecipients(String accountId, String envelopeId,
+      RecipientsModel recipientsModel) async {
+    String jsonRecipientsModel = jsonEncode(recipientsModel);
+    return await _methodsChannel.invokeMethod(
+        'updateRecipients', [accountId, envelopeId, jsonRecipientsModel]);
+  }
+
+  static Future<String?> createRecipientTabs(String accountId,
+      String envelopeId, String recipientId, TabsModel tabsModel) async {
+    String jsonTabsModel = jsonEncode(tabsModel);
+    return await _methodsChannel.invokeMethod('createRecipientTabs',
+        [accountId, envelopeId, recipientId, jsonTabsModel]);
   }
 
   static String _generateJWT(InputTokenModel inputTokenModel) {
     final jwt = JWT({
-      'iat': (DateTime.now().millisecondsSinceEpoch / 1000).floor().toString(),
+      'iat': (DateTime.now().millisecondsSinceEpoch / 1000).floor(),
       'exp': (DateTime.now()
                   .add(const Duration(minutes: 2))
                   .millisecondsSinceEpoch /
               1000)
-          .floor()
-          .toString(),
+          .floor(),
       'scope': 'signature impersonation'
     },
         audience: Audience([inputTokenModel.url]),
         subject: inputTokenModel.userId,
         issuer: inputTokenModel.integratorKey);
+
     final key = RSAPrivateKey(inputTokenModel.privateRSAKey);
     String token = jwt.sign(key, algorithm: JWTAlgorithm.RS256);
     return token;
