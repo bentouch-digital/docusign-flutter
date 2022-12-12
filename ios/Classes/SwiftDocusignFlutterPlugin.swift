@@ -14,6 +14,7 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
     private var loginResult: FlutterResult?
     private var captiveSignResult: FlutterResult?
     private var deleteDocumentsResult: FlutterResult?
+    private var deleteRecipientsResult: FlutterResult?
     private var addDocumentsResult: FlutterResult?
     private var createRecipientTabsResult: FlutterResult?
     private var updateRecipientsResult: FlutterResult?
@@ -54,6 +55,9 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
         case "createRecipientTabs":
             createRecipientTabsResult = result
             createRecipientTabs(call: call)
+        case "deleteRecipients":
+            deleteRecipientsResult = result
+            deleteRecipients(call: call)
         case "updateRecipients":
             updateRecipientsResult = result
             updateRecipients(call: call)
@@ -315,6 +319,56 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
                 return
             } else {
                 self.updateRecipientsResult?(envelopeId)
+                return
+            }
+        }
+    }
+    
+    func deleteRecipients(call: FlutterMethodCall) {
+        guard let params = call.arguments as? Array<String> else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect params string"))
+            return
+        }
+        
+        let accountId = params[0];
+        let envelopeId = params[1];
+        guard let jsonData = params[2].data(using: .utf8),
+              let recipientsModel: RecipientsModel = try? JSONDecoder().decode(RecipientsModel.self, from: jsonData) else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
+            return
+        }
+        
+        // carbon copies
+        var carbonCopies = [DSAPICarbonCopy]()
+        for carbonCopy in recipientsModel.carbonCopies {
+            carbonCopies.append(DSAPICarbonCopy.init(email: carbonCopy.email, firstName: carbonCopy.firstName, lastName: carbonCopy.lastName, name: carbonCopy.name, recipientId: carbonCopy.recipientId, routingOrder: carbonCopy.routingOrder, status: carbonCopy.status))
+        }
+        
+        // signers
+        var signers = [DSAPISigner]()
+        for signer in recipientsModel.signers {
+            // sms authentication
+            let smsAuthentication = DSAPIRecipientSMSAuthentication.init(senderProvidedNumbers: signer.smsAuthentication.senderProvidedNumbers)
+            
+            // sign here tabs
+            var signHereTabs = [DSAPISignHere]()
+            for signHereTab in signer.tabs.signHereTabs {
+                signHereTabs.append(DSAPISignHere.init(anchorString: signHereTab.anchorString, anchorUnits: signHereTab.anchorUnits, anchorXOffset: signHereTab.anchorXOffset, anchorYOffset: signHereTab.anchorYOffset, status: signHereTab.status))
+            }
+            // tabs
+            let tabs = DSAPITabs.init(signHereTabs: signHereTabs)
+            
+            signers.append(DSAPISigner.init(clientUserId: signer.clientUserId, email: signer.email, firstName: signer.firstName, idCheckConfigurationName: signer.idCheckConfigurationName, lastName: signer.lastName, name: signer.name, recipientId: signer.recipientId, requireIdLookup: signer.requireIdLookup, routingOrder: signer.routingOrder, smsAuthentication: smsAuthentication, status: signer.status, tabs: tabs))
+        }
+        
+        let recipients = DSAPIRecipients.init(carbonCopies: carbonCopies, signers: signers)
+        
+        EnvelopesAPI.recipientsDeleteRecipients(accountId: accountId, envelopeId: envelopeId, body: recipients) { data, error in
+            if error != nil {
+                self.deleteRecipientsResult?(self.buildError(title: "delete recipients cancelled", details: error?.localizedDescription))
+                return
+            } else {
+                self.deleteRecipientsResult?(envelopeId)
                 return
             }
         }
