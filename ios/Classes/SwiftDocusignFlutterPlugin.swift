@@ -333,35 +333,18 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
         let accountId = params[0];
         let envelopeId = params[1];
         guard let jsonData = params[2].data(using: .utf8),
-              let recipientsModel: RecipientsModel = try? JSONDecoder().decode(RecipientsModel.self, from: jsonData) else {
+              let deleteRecipientsModel: DeleteRecipientsModel = try? JSONDecoder().decode(DeleteRecipientsModel.self, from: jsonData) else {
             loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect json: \(params)"))
             return
         }
         
-        // carbon copies
-        var carbonCopies = [DSAPICarbonCopy]()
-        for carbonCopy in recipientsModel.carbonCopies {
-            carbonCopies.append(DSAPICarbonCopy.init(email: carbonCopy.email, firstName: carbonCopy.firstName, lastName: carbonCopy.lastName, name: carbonCopy.name, recipientId: carbonCopy.recipientId, routingOrder: carbonCopy.routingOrder, status: carbonCopy.status))
-        }
-        
         // signers
         var signers = [DSAPISigner]()
-        for signer in recipientsModel.signers {
-            // sms authentication
-            let smsAuthentication = DSAPIRecipientSMSAuthentication.init(senderProvidedNumbers: signer.smsAuthentication.senderProvidedNumbers)
-            
-            // sign here tabs
-            var signHereTabs = [DSAPISignHere]()
-            for signHereTab in signer.tabs.signHereTabs {
-                signHereTabs.append(DSAPISignHere.init(anchorString: signHereTab.anchorString, anchorUnits: signHereTab.anchorUnits, anchorXOffset: signHereTab.anchorXOffset, anchorYOffset: signHereTab.anchorYOffset, status: signHereTab.status))
-            }
-            // tabs
-            let tabs = DSAPITabs.init(signHereTabs: signHereTabs)
-            
-            signers.append(DSAPISigner.init(clientUserId: signer.clientUserId, email: signer.email, firstName: signer.firstName, idCheckConfigurationName: signer.idCheckConfigurationName, lastName: signer.lastName, name: signer.name, recipientId: signer.recipientId, requireIdLookup: signer.requireIdLookup, routingOrder: signer.routingOrder, smsAuthentication: smsAuthentication, status: signer.status, tabs: tabs))
+        for recipientId in deleteRecipientsModel.recipientIds {
+            signers.append(DSAPISigner.init(recipientId: recipientId))
         }
         
-        let recipients = DSAPIRecipients.init(carbonCopies: carbonCopies, signers: signers)
+        let recipients = DSAPIRecipients.init(signers: signers)
         
         EnvelopesAPI.recipientsDeleteRecipients(accountId: accountId, envelopeId: envelopeId, body: recipients) { data, error in
             if error != nil {
