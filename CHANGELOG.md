@@ -1,3 +1,7 @@
+## 0.0.4
+
+* Envelope recreation improvement
+
 ## 0.0.3
 
 * Implement documents deletion and creation
