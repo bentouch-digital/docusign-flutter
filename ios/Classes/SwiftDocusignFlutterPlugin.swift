@@ -20,6 +20,7 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
     private var updateRecipientsResult: FlutterResult?
     private var createEnvelopeResult: FlutterResult?
     private var offlineSigningResult: FlutterResult?
+    private var getDocumentResult: FlutterResult?
     private var syncEnvelopesResult: FlutterResult?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -64,6 +65,9 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
         case "offlineSigning":
             offlineSigningResult = result
             offlineSigning(call: call)
+        case "getDocument":
+            getDocumentResult = result
+            getDocument(call: call)
         case "syncEnvelopes":
             syncEnvelopesResult = result
             syncEnvelopes(call: call)
@@ -352,6 +356,28 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
                 return
             } else {
                 self.deleteRecipientsResult?(envelopeId)
+                return
+            }
+        }
+    }
+    
+    func getDocument(call: FlutterMethodCall) {
+        guard let params = call.arguments as? Array<String> else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect params string"))
+            return
+        }
+        
+        let accountId = params[0];
+        let envelopeId = params[1];
+        let documentId = params[2];
+        
+        EnvelopesAPI.documentsGetDocument(accountId: accountId, documentId: documentId, envelopeId: envelopeId) { data, error in
+            if error != nil {
+                self.getDocumentResult?(self.buildError(title: "get document cancelled", details: error?.localizedDescription))
+                return
+            } else {
+                let url = data?.path;
+                self.getDocumentResult?(url);
                 return
             }
         }

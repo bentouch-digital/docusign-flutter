@@ -24,15 +24,17 @@ String accessToken = r'<<NEED_CHANGE>>';
 const String accountId = r'<<NEED_CHANGE>>';
 const String email = r'<<NEED_CHANGE>>';
 const int expiresIn = 28800;
-const String host = r'https://demo.docusign.net/restapi';
+const String host = r'<<NEED_CHANGE>>';
 const String integratorKey = r'<<NEED_CHANGE>>';
 const String userId = r'<<NEED_CHANGE>>';
 const String userName = r'<<NEED_CHANGE>>';
-const String privateRSAKey = r'''<<NEED_CHANGE>>''';
-const String publicRSAKey = r'''<<NEED_CHANGE>>''';
+const String privateRSAKey =
+    r'''<<NEED_CHANGE>>''';
+const String publicRSAKey =
+    r'''<<NEED_CHANGE>>''';
 
 const String envelopeId = r'<<NEED_CHANGE>>';
-const String recipientClientUserId = r'<<NEED_CHANGE>>';
+const String recipientClientUserId = r'1';
 const String recipientEmail = r'<<NEED_CHANGE>>';
 const String recipientUserName = r'<<NEED_CHANGE>>';
 
@@ -56,6 +58,7 @@ class _MyAppState extends State<MyApp> {
   String? _modifiedEnvelopeIdCreateTabs;
   String? _modifiedEnvelopeIdUpdatedRecipients;
   String? _signingUrl;
+  String? _documentPath;
   bool? _syncingStatus;
   bool? _offlineSigningStatus;
   AccessTokenModel? _accessTokenModel;
@@ -90,6 +93,13 @@ class _MyAppState extends State<MyApp> {
                   ElevatedButton(
                     onPressed: () => _auth(),
                     child: const Text('Auth'),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text('Document path :$_documentPath\n')),
+                  ElevatedButton(
+                    onPressed: () => _getDocument(),
+                    child: const Text('Get Document'),
                   ),
                   Padding(
                       padding: const EdgeInsets.only(top: 20),
@@ -329,6 +339,14 @@ class _MyAppState extends State<MyApp> {
         accountId, _envelopeId ?? '', deleteDocumentsModel);
     setState(() {
       _modifiedEnvelopeIdDeleteDocument = result;
+    });
+  }
+
+  Future<void> _getDocument() async {
+    var result = await DocusignFlutter.getDocument(
+        accountId, _envelopeId ?? '', '1');
+    setState(() {
+      _documentPath = result;
     });
   }
 
