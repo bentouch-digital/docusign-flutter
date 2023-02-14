@@ -1,3 +1,7 @@
+## 0.0.5
+
+* Download document from a DOCUSIGN envelope
+
 ## 0.0.4
 
 * Envelope recreation improvement
