@@ -1,3 +1,7 @@
+## 0.0.6
+
+* Delete envelope
+
 ## 0.0.5
 
 * Download document from a DOCUSIGN envelope

@@ -92,6 +92,12 @@ class DocusignFlutter {
         'updateRecipients', [accountId, envelopeId, jsonRecipientsModel]);
   }
 
+  static Future<String?> deleteEnvelope(
+      String accountId, String envelopeId) async {
+    return await _methodsChannel
+        .invokeMethod('deleteEnvelope', [accountId, envelopeId]);
+  }
+
   static Future<String?> deleteRecipients(String accountId, String envelopeId,
       DeleteRecipientsModel deleteRecipientsModel) async {
     String jsonDeleteRecipientsModel = jsonEncode(deleteRecipientsModel);

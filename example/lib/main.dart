@@ -21,17 +21,15 @@ import 'package:docusign_flutter/docusign_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 String accessToken = r'<<NEED_CHANGE>>';
-const String accountId = r'056e5faa-6144-474d-a9ca-252154beb8be';
-const String email = r'signature@technitoit.com';
+const String accountId = r'<<NEED_CHANGE>>';
+const String email = r'<<NEED_CHANGE>>';
 const int expiresIn = 28800;
 const String host = r'https://demo.docusign.net/restapi';
-const String integratorKey = r'26341914-0453-45f9-ae36-b8d17c244660';
-const String userId = r'70846eda-f780-440c-a5d3-ca33479f0e15';
-const String userName = r'Signa Ture';
-const String privateRSAKey =
-    r'''-----BEGIN RSA PRIVATE KEY----- MIIEpAIBAAKCAQEAj10kEgcOitWNpVG34oaLssIGk34gSUlG7w9IoQHFDUEsrngW YVaUtTNsBqaGnwKpGAXvDRYMRXttNQf6CBw62UbFz5RT86v5M2RLcBtAIryBY/A8 lT3JpHxLbZhN9u25IrNowSIbUrozjmpz7jW7WXuyxw/6MdHgZZvOWNFADTZB4ue0 MDyDj6eAoQvu/rjXGfJujeoyZGMRBIIacIpbtkYCRyN3baV8dQSlCyzqM/4/cCFl k3I8iF1tqO3UClE9l+SmQimFJRcirsHcLEiwQgkNT6MrKBlG8UxZPUybFktxdeXA 3d+GMWArE2T8gzZQhzlBNCWLEsG0ldqi+pyDzQIDAQABAoIBACGDt+i5+xmUKmCd LbR4WSShLKniyJfxWDKPO16eXAtI8vHXc33uYGXK32RfniWCmPabfoKr5pMAs2s8 EeS++rfsDlbEWWrjx2ZO+j67NB9au5HaKcOG1gKMpxJ4EjPZZ5gX4nOR7lrE2kQf GTp1F7bnzsev8cCfTIrcZV0Ij+V2caJr/JsJs9CW8EUxSP1Oje4fcUOZAktLbyw+ 3n+iRvCcrsE5uxCFj4iDN36V7lDiJMhWtIQxYb3TTr6xzpv4c5vV5fDxq/CcTE3x 4NLiflU/0/O3IjH9rxgLPpo/cYyNWLd6eNR2jyTUh4KRqd+DVMH0DsSz4r8tqCuz zj9OV1ECgYEAzPkYhjPnAD/DIdih6JkxOFVlEzmD75IFRw0szwXRd6tiC+vNYZLp H7dEBdecLdHSTZrSCUkngeNOstURlrHmzdKmLeAZG5Okb096+v8ycgCXPcQFIKoE Cw+U25JmeiUhtVv3CIvGHMWruNM8fTdxtd717K53VNtM1N1K9FVbpH0CgYEAsw2y 8LqOgLAhLY8e+dvecknmMrq8TsWwQR4cWWPZnniEwS00xTkt4F0kn4WvTqsxN8ZW r5E0N+6qZ9UGYTc63i5hFU/LckgT0nfqfB8xIh4AVpb5XycRF75wCPcfQuqbOXZJ Q01LAfEEhBx9ORnlPck6wBjO3e1tZADDSBTiDZECgYEAq+4VgBxxG2hgiTdpN+2n t5UJn0KTRJS7EIogl9ZNiY+cQlucfsf3+76BtFTSkCx7ttSycU+HcA/2p1LJ2hmH fAXBlqFu7g690xBcG8WLzsxoEEsn8eoqUgzT1AnNI4+Z4sItSGHV37R/Ah1Nk8q5 +s/2gH0nY2o/3B1zDde7cxECgYBJuytjW78QmPaglx3vT63TLEEhxKmEWn2Q4wBT gv169y/biG0BheExUcmh8t/UqkQTLpZFp6p0GdCL/zmoUKDqGvkZWIlzXuDiu0SQ phuKbAZBodvAZgrw1xe1aWWzHX6b8+yJTUvE2eW9LSoXmGVAwxtxPQX6dymjk3jW ttq7MQKBgQCm6C26LFA7nz0ZvpVxzFvV7r0Ygab7ILp/dGjc/+1eVrTM5RtJS+qc qUqfSVs08WGPGksIhfZhl76CW/pCVbzT9b9k/1uBMsASqiKYNQTZRS+NZPkNeDYn TNzlfUZ5sbvPhKTy+Lw2EmxRTdQhQgbV7kokhytou5C6MVhQLzCkVA== -----END RSA PRIVATE KEY-----''';
-const String publicRSAKey =
-    r'''-----BEGIN PUBLIC KEY----- MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAj10kEgcOitWNpVG34oaL ssIGk34gSUlG7w9IoQHFDUEsrngWYVaUtTNsBqaGnwKpGAXvDRYMRXttNQf6CBw6 2UbFz5RT86v5M2RLcBtAIryBY/A8lT3JpHxLbZhN9u25IrNowSIbUrozjmpz7jW7 WXuyxw/6MdHgZZvOWNFADTZB4ue0MDyDj6eAoQvu/rjXGfJujeoyZGMRBIIacIpb tkYCRyN3baV8dQSlCyzqM/4/cCFlk3I8iF1tqO3UClE9l+SmQimFJRcirsHcLEiw QgkNT6MrKBlG8UxZPUybFktxdeXA3d+GMWArE2T8gzZQhzlBNCWLEsG0ldqi+pyD zQIDAQAB -----END PUBLIC KEY-----''';
+const String integratorKey = r'<<NEED_CHANGE>>';
+const String userId = r'<<NEED_CHANGE>>';
+const String userName = r'<<NEED_CHANGE>>';
+const String privateRSAKey = r'''<<NEED_CHANGE>>''';
+const String publicRSAKey = r'''<<NEED_CHANGE>>''';
 
 const String envelopeId = r'<<NEED_CHANGE>>';
 const String recipientClientUserId = r'1';
@@ -57,6 +55,7 @@ class _MyAppState extends State<MyApp> {
   String? _modifiedEnvelopeIdAddDocument;
   String? _modifiedEnvelopeIdCreateTabs;
   String? _modifiedEnvelopeIdUpdatedRecipients;
+  String? _deleteEnvelopeId;
   String? _signingUrl;
   String? _documentPath;
   bool? _syncingStatus;
@@ -107,6 +106,13 @@ class _MyAppState extends State<MyApp> {
                   ElevatedButton(
                     onPressed: () => _createEnvelope(),
                     child: const Text('Create enveloppe'),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text('Delete Envelope Id :$_deleteEnvelopeId\n')),
+                  ElevatedButton(
+                    onPressed: () => _deleteEnvelope(),
+                    child: const Text('Delete enveloppe'),
                   ),
                   Padding(
                       padding: const EdgeInsets.only(top: 20),
@@ -312,6 +318,14 @@ class _MyAppState extends State<MyApp> {
     } else {
       // User canceled the picker
     }
+  }
+
+  Future<void> _deleteEnvelope() async {
+    var result = await DocusignFlutter.deleteEnvelope(
+        accountId, '388636bc-6a09-453a-96ee-5746d2b0fc25');
+    setState(() {
+      _deleteEnvelopeId = result;
+    });
   }
 
   Future<void> _captiveSigning() async {

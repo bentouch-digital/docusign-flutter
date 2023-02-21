@@ -22,6 +22,7 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
     private var offlineSigningResult: FlutterResult?
     private var getDocumentResult: FlutterResult?
     private var syncEnvelopesResult: FlutterResult?
+    private var deleteEnvelopeResult: FlutterResult?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channelMethods = FlutterMethodChannel(name: ChannelName.methods, binaryMessenger: registrar.messenger())
@@ -71,6 +72,9 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
         case "syncEnvelopes":
             syncEnvelopesResult = result
             syncEnvelopes(call: call)
+        case "deleteEnvelope":
+            deleteEnvelopeResult = result
+            deleteEnvelope(call: call)
         default:
             result(buildError(title: Constants.IncorrectCommand))
         }
@@ -356,6 +360,29 @@ public class SwiftDocusignFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamH
                 return
             } else {
                 self.deleteRecipientsResult?(envelopeId)
+                return
+            }
+        }
+    }
+
+    func deleteEnvelope(call: FlutterMethodCall) {
+        guard let params = call.arguments as? Array<String> else {
+            loginResult?(buildError(title: Constants.IncorrectArguments, details: "incorrect params string"))
+            return
+        }
+        
+        let accountId = params[0];
+        let envelopeId = params[1];
+        
+        // folders request
+        let foldersRequest = DSAPIFoldersRequest.init(envelopeIds: [envelopeId]);
+
+        FoldersAPI.foldersPutFolderById(accountId: accountId, folderId: "recyclebin", body: foldersRequest) { data, error in
+            if error != nil {
+                self.deleteEnvelopeResult?(self.buildError(title: "Delete envelope cancelled", details: error?.localizedDescription))
+                return
+            } else {
+                self.deleteEnvelopeResult?(envelopeId)
                 return
             }
         }
