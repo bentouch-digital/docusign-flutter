@@ -30,7 +30,7 @@ PODS:
   - DKPhotoGallery/Resource (0.0.17):
     - SDWebImage
     - SwiftyGif
-  - DocuSign (3.0.3)
+  - DocuSign (3.0.4)
   - docusign_flutter (0.0.1):
     - DocuSign (~> 3.0.0)
     - Flutter
@@ -40,9 +40,9 @@ PODS:
   - Flutter (1.0.0)
   - path_provider_ios (0.0.1):
     - Flutter
-  - SDWebImage (5.15.3):
-    - SDWebImage/Core (= 5.15.3)
-  - SDWebImage/Core (5.15.3)
+  - SDWebImage (5.15.6):
+    - SDWebImage/Core (= 5.15.6)
+  - SDWebImage/Core (5.15.6)
   - SwiftyGif (5.4.4)
   - webview_flutter_wkwebview (0.0.1):
     - Flutter
@@ -77,15 +77,15 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   DKImagePickerController: b512c28220a2b8ac7419f21c491fc8534b7601ac
   DKPhotoGallery: fdfad5125a9fdda9cc57df834d49df790dbb4179
-  DocuSign: 0637896ae12a869606151533732ac56bcb8ff13f
+  DocuSign: a4cc9bcb8e0ea3fc7e6e6076eca65c0ab9ed1a55
   docusign_flutter: 90ae95dd7dd8677bc6a471a1bde2d5f99fa9a1f0
   file_picker: 817ab1d8cd2da9d2da412a417162deee3500fc95
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   path_provider_ios: 14f3d2fd28c4fdb42f44e0f751d12861c43cee02
-  SDWebImage: 302d4e14efff86b36b5f36d1bf891b635436d071
+  SDWebImage: d47d81bea8a77187896b620dc79c3c528e8906b9
   SwiftyGif: 93a1cc87bf3a51916001cf8f3d63835fb64c819f
   webview_flutter_wkwebview: b7e70ef1ddded7e69c796c7390ee74180182971f
 
 PODFILE CHECKSUM: 775997f741c536251164e3eacf6e34abf2eb7a17
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.12.1
