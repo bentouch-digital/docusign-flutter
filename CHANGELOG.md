@@ -1,3 +1,7 @@
+## 0.0.7
+
+* Upgrade packages
+
 ## 0.0.6
 
 * Delete envelope
